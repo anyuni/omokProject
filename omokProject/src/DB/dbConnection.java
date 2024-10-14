@@ -6,10 +6,27 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-	public class TestDBConnection {
-	    private static final String URL = "jdbc:mysql://localhost:3307/dbstudy?serverTimezone=Asia/Seoul";
+	public class dbConnection {
+	    private static final String URL = "jdbc:mysql://localhost:3307/omok?serverTimezone=Asia/Seoul";
 	    private static final String USER = "root";
 	    private static final String PASSWD = "1234";
+	    
+	    public Connection getConnection() {
+	        Connection conn = null;
+	        try {
+	            // MySQL JDBC 드라이버 로드
+	            Class.forName("com.mysql.cj.jdbc.Driver");
+	            conn = DriverManager.getConnection(URL, USER, PASSWD);
+	        } catch (ClassNotFoundException e) {
+	            e.printStackTrace();
+	            System.out.println("JDBC 드라이버를 찾을 수 없습니다.");
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	            System.out.println("DB 연결 오류: " + e.getMessage());
+	        }
+	        return conn;
+	    }
+	
 
 	    public static void main(String[] args) {
 	        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWD)) {
@@ -19,8 +36,8 @@ import java.sql.Statement;
 	            // 테이블 생성
 	            String createTableSQL = "CREATE TABLE IF NOT EXISTS user (" +
 	                                    "name VARCHAR(10) NOT NULL, " +
-	                                    "id VARCHAR(20) NOT NULL PRIMARY KEY, " +
-	                                    "password VARCHAR(20) NOT NULL)";
+	                                    "id VARCHAR(50) NOT NULL PRIMARY KEY, " +
+	                                    "password VARCHAR() NOT NULL)";
 	            try (Statement stmt = conn.createStatement()) {
 	                stmt.execute(createTableSQL);
 	                System.out.println("테이블 생성 성공!");
@@ -31,9 +48,9 @@ import java.sql.Statement;
 	            // 데이터 삽입
 	            String insertSQL = "INSERT INTO user (name, id, password) VALUES (?, ?, ?)";
 	            try (PreparedStatement pstmt = conn.prepareStatement(insertSQL)) {
-	                pstmt.setString(1, "도구");
-	                pstmt.setString(2, "testdb");
-	                pstmt.setString(3, "qwer1234");
+	                pstmt.setString(1, "이정민1");
+	                pstmt.setString(2, "오목1");
+	                pstmt.setString(3, "1111");
 	                pstmt.executeUpdate();
 	                System.out.println("데이터 삽입 성공!");
 	            } catch (SQLException e) {

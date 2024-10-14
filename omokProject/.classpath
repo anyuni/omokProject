@@ -7,5 +7,8 @@
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="C:/Program Files (x86)/MySQL/mysql-connector-j-8.4.0/mysql-connector-j-8.4.0.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/Java/Jcalendar/lib/jcalendar-1.4.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oopp2/Downloads/javax.mail-1.6.2.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/Java/json-20240303.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.awt.event.ActionEvent;
+import java.net.Socket;
 import DB.DBManager;
 
 public class MainFrame extends JFrame {
@@ -13,6 +14,7 @@ public class MainFrame extends JFrame {
     private JTextField textFieldId;
     private JPasswordField passwordField; // 비밀번호 필드
     private Image backgroundImage;
+    private Socket socket; // 소켓 변수 추가
 
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
@@ -94,9 +96,15 @@ public class MainFrame extends JFrame {
                 String password = new String(passwordField.getPassword()); // 비밀번호 가져오기
 
                 if (DBManager.login(id, password)) {
-                    // 로그인 성공 시 바로 LobbyFrame으로 이동
-                    new LobbyFrame().setVisible(true);
-                    dispose(); // 현재 창 닫기
+                    try {
+                        socket = new Socket("localhost", 12345);
+                        omokClient client = new omokClient(socket);
+                        new LobbyFrame(client).setVisible(true);
+                        dispose(); // 현재 창 닫기
+                    } catch (IOException ioException) {
+                        JOptionPane.showMessageDialog(null, "서버에 연결할 수 없습니다.");
+                        ioException.printStackTrace();
+                    }
                 } else {
                     JOptionPane.showMessageDialog(null, "로그인 실패! 아이디와 비밀번호를 확인하세요.");
                 }

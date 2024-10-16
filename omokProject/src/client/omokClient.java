@@ -1,79 +1,92 @@
 package client;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.*;
+import javax.swing.*;
+import java.awt.*;
 
 public class omokClient {
-    private Socket socket;
-    private BufferedReader in;
-    private PrintWriter out;
-    private JFrame frame; // GUI 프레임
-    private JTextField inputField; // 메시지 입력 필드
-    private JTextArea chatArea; // 채팅 내용을 표시할 텍스트 영역
+    private static Socket socket;
+    private static PrintWriter out;
+    private static BufferedReader in;
+    private static LobbyFrame lobbyFrame; // LobbyFrame 인스턴스 추가
+    
 
-    public omokClient(String serverAddress, int port) {
+    public omokClient(Socket socket) {
+        this.socket = socket;
+    }
+    
+    public Socket getSocket() {
+        return socket; // 소켓 변수 반환
+    }
+    
+    public static void setLobbyFrame(LobbyFrame frame) {
+        lobbyFrame = frame; // 전달된 LobbyFrame 인스턴스를 설정
+    }
+
+
+    public static void main(String[] args) {
         try {
-            socket = new Socket(serverAddress, port);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            socket = new Socket("localhost", 12345); // 서버 IP 및 포트 설정
             out = new PrintWriter(socket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            // GUI 설정
-            frame = new JFrame("오목 게임 클라이언트");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(400, 300);
-            frame.setLayout(new BorderLayout());
-
-            chatArea = new JTextArea();
-            chatArea.setEditable(false); // 사용자 입력 불가능
-            frame.add(new JScrollPane(chatArea), BorderLayout.CENTER); // 스크롤 가능하게 추가
-
-            inputField = new JTextField();
-            frame.add(inputField, BorderLayout.SOUTH); // 입력 필드를 하단에 추가
-
-            // 전송 버튼 추가
-            JButton sendButton = new JButton("전송");
-            sendButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    sendMessage(inputField.getText()); // 메시지 전송
-                    inputField.setText(""); // 입력 필드 초기화
+            // GUI 초기화 및 표시
+            EventQueue.invokeLater(() -> {
+                try {
+                    omokClient client = new omokClient(socket); // omokClient 인스턴스 생성
+                    LobbyFrame lobbyFrame = new LobbyFrame(client); // LobbyFrame에 클라이언트 전달
+                    lobbyFrame.setVisible(true);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             });
-            frame.add(sendButton, BorderLayout.EAST); // 버튼을 하단 오른쪽에 추가
 
-            frame.setVisible(true); // 프레임 표시
+            // 서버 메시지 처리 스레드
+            new Thread(() -> {
+                String response;
+                try {
+                    while ((response = in.readLine()) != null) {
+                        processServerMessage(response);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
 
-            new Thread(new MessageReceiver()).start(); // 서버로부터 메시지 수신 스레드 시작
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void sendMessage(String message) {
-        if (message != null && !message.trim().isEmpty()) {
-            out.println(message); // 서버로 메시지 전송
-        }
-    }
 
-    private class MessageReceiver implements Runnable {
-        @Override
-        public void run() {
-            try {
-                String messageFromServer;
-                while ((messageFromServer = in.readLine()) != null) {
-                    chatArea.append("서버: " + messageFromServer + "\n"); // 채팅 영역에 메시지 추가
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+    private static void processServerMessage(String message) {
+        // 서버에서 보낸 메시지를 처리하는 로직 구현
+        if (message.startsWith("CHAT//")) { // 채팅 메시지 처리
+            String chatMessage = message.substring(6); // "CHAT//" 부분 제거
+            if (lobbyFrame != null) {
+                lobbyFrame.appendChatMessage(chatMessage); // LobbyFrame의 메서드를 호출하여 메시지를 추가
             }
+        } else {
+            // 방 생성 완료, 방 입장 등 다른 메시지 처리 로직 추가 가능
         }
     }
 
-    public static void main(String[] args) {
-        new omokClient("localhost", 12345); // 서버 주소와 포트 설정
+    public void sendMsg(String message) {
+        try {
+            if (out != null) { // PrintWriter가 초기화되어 있는지 확인
+                out.println(message); // 서버로 메시지 전송
+            } else {
+                System.err.println("PrintWriter가 초기화되지 않았습니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+    
+    public String receiveMsg() throws IOException {
+        return in.readLine(); // BufferedReader에서 한 줄 읽어오기
+    }
+
+
 }
